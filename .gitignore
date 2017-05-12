@@ -1,0 +1,4 @@
+vendor/
+build/
+config.json
+lastdate.txt

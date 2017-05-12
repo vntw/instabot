@@ -1,0 +1,3 @@
+[[constraint]]
+  name = "github.com/nlopes/slack"
+  revision = "5cde21b8b96a43fc3435a1f514123d14fd7eabdc"
