@@ -81,6 +81,7 @@ func printOptions(config *cfg.Config) {
 	log.Println("")
 	log.Println("-- Options ---")
 	log.Printf("Username:\t%s\n", config.Username)
+	log.Printf("MsgColor:\t%s\n", config.MsgColor)
 	log.Printf("WaitTime:\t%dm\n", config.WaitTime)
 	log.Printf("Channel:\t%s\n", config.SlackChannel)
 	log.Printf("Proxy:\t%s\n", proxy)

@@ -11,6 +11,7 @@ Copy `config.json.dist` to `config.json` and configure your options. Then simply
 | Option | Description |
 | --- | --- |
 | `user` | The Instagram username |
+| `msg-color` | The Slack message attachment line hex color code, default is `#000000` |
 | `wait-time` | The wait time between crawls in minutes, default is `10` |
 | `slack-token` | Your bot's Slack token |
 | `slack-channel` | The channel name where to post the images, e.g. `channel` |
