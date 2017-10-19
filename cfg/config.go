@@ -9,6 +9,8 @@ import (
 
 type Config struct {
 	Username string `json:"username"`
+	// The attachment line color
+	MsgColor string `json:"msg-color"`
 	// The time between requests in minutes
 	WaitTime     uint8  `json:"wait-time"`
 	SlackToken   string `json:"slack-token"`
@@ -27,6 +29,10 @@ func NewConfig(configFile string) (*Config, error) {
 	var cfg *Config
 	if err = json.Unmarshal(content, &cfg); err != nil {
 		return nil, errors.New("could not unmarshal config: " + err.Error())
+	}
+
+	if cfg.MsgColor == "" {
+		cfg.MsgColor = "#000000"
 	}
 
 	if cfg.Username == "" {

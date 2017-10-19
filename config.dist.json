@@ -1,5 +1,6 @@
 {
   "username": "",
+  "msg-color": "#000000",
   "wait-time": 10,
   "slack-token": "",
   "slack-channel": "",
