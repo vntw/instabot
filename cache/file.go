@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -8,17 +9,16 @@ import (
 	"strings"
 )
 
-const saveFile = "lastdate.txt"
-
-func NewFileCache() Cache {
-	return &FileCache{}
+func NewFileCache(ns string) *fileCache {
+	return &fileCache{filename: fmt.Sprintf("%s-cache.txt", ns)}
 }
 
-type FileCache struct {
+type fileCache struct {
+	filename string
 }
 
-func (c FileCache) ReadLastDate() int64 {
-	val, err := ioutil.ReadFile(saveFile)
+func (c fileCache) ReadLastDate() int64 {
+	val, err := ioutil.ReadFile(c.filename)
 
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -40,6 +40,6 @@ func (c FileCache) ReadLastDate() int64 {
 	return lastDate
 }
 
-func (c FileCache) WriteLastDate(date int64) error {
-	return ioutil.WriteFile(saveFile, []byte(strconv.FormatInt(date, 10)), 0644)
+func (c fileCache) WriteLastDate(date int64) error {
+	return ioutil.WriteFile(c.filename, []byte(strconv.FormatInt(date, 10)), 0644)
 }

@@ -1,4 +1,4 @@
 vendor/
 build/
 config.json
-lastdate.txt
+*-cache.txt

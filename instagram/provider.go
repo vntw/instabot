@@ -103,7 +103,7 @@ func (p Provider) createMessage(u User, n Node) slack.Message {
 }
 
 func getDummyHtml() []byte {
-	dummyResp, err := ioutil.ReadFile("instagram/fixtures/response.html")
+	dummyResp, err := ioutil.ReadFile("fixtures/response.html")
 	if err != nil {
 		log.Fatal(err)
 	}
