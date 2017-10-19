@@ -25,7 +25,7 @@ func (c Client) Send(msgs []Message) {
 	var wg sync.WaitGroup
 
 	for _, msg := range msgs {
-		log.Printf("Sending: %s - %s\n", msg.Author, msg.ImageUrl)
+		log.Printf("Sending: %s - %s\n", msg.Username, msg.ImageUrl)
 		wg.Add(1)
 
 		go func(m Message) {

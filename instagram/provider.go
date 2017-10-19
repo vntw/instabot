@@ -89,14 +89,14 @@ func (p Provider) findNewMsgs(u User, lastDate int64) []slack.Message {
 }
 
 func (p Provider) createMessage(u User, n Node) slack.Message {
-	m := slack.NewMessage(name)
+	m := slack.NewMessage(name, u.Username)
 	m.Text = n.DetailUrl()
-	m.Author = u.Username
+	m.Author = u.Fullname
 	m.AuthorIcon = u.ProfilePic
 	m.AuthorLink = u.ProfileUrl()
 	m.ImageUrl = n.Src
 	m.Date = int64(n.Date)
-	m.Color = "#fddd4a"
+	m.Color = p.cfg.MsgColor
 	m.Fallback = fmt.Sprintf("New Instagram post by %s", u.Username)
 
 	return *m

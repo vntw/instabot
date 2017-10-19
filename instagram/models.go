@@ -22,6 +22,7 @@ type UserContainer struct {
 
 type User struct {
 	Username   string `json:"username"`
+	Fullname   string `json:"full_name"`
 	ProfilePic string `json:"profile_pic_url"`
 
 	Media Media `json:"media"`

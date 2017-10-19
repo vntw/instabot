@@ -8,6 +8,8 @@ import (
 )
 
 type Message struct {
+	Username string
+
 	Fallback string
 	Text     string
 
@@ -22,8 +24,8 @@ type Message struct {
 	Date int64
 }
 
-func NewMessage(provider string) *Message {
-	return &Message{ProviderName: provider}
+func NewMessage(provider string, username string) *Message {
+	return &Message{ProviderName: provider, Username: username}
 }
 
 func (m Message) SlackMessageParams() slack.PostMessageParameters {
