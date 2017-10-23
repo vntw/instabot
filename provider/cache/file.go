@@ -1,32 +1,31 @@
 package cache
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"strconv"
 	"strings"
 )
 
-func NewFileCache(ns string) *fileCache {
-	return &fileCache{filename: fmt.Sprintf("%s-cache.txt", ns)}
+func NewFileCache(ns string, u string) *fileCache {
+	return &fileCache{filename: fmt.Sprintf("%s-%s-cache.txt", ns, u)}
 }
 
 type fileCache struct {
 	filename string
 }
 
-func (c fileCache) ReadLastDate() int64 {
+func (c fileCache) ReadLastDate() (int64, error) {
 	val, err := ioutil.ReadFile(c.filename)
 
 	if err != nil {
 		if os.IsNotExist(err) {
-			return -1
-		} else {
-			log.Println("Could not read from cache")
-			log.Fatal(err)
+			return -1, nil
 		}
+
+		return 0, errors.New(fmt.Sprintf("could not read from cache file %s: %v", c.filename, err))
 	}
 
 	str := strings.TrimSpace(string(val))
@@ -34,10 +33,10 @@ func (c fileCache) ReadLastDate() int64 {
 
 	if err != nil {
 		// Invalid date value given - ignore
-		return -1
+		return -1, nil
 	}
 
-	return lastDate
+	return lastDate, nil
 }
 
 func (c fileCache) WriteLastDate(date int64) error {

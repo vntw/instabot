@@ -2,11 +2,9 @@ package instagram
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log"
+	"net/http"
 
-	"github.com/venyii/instabot/cache"
-	"github.com/venyii/instabot/cfg"
+	"github.com/venyii/instabot/provider/cache"
 	"github.com/venyii/instabot/slack"
 )
 
@@ -17,75 +15,45 @@ const (
 )
 
 type Provider struct {
-	cfg   cfg.Config
-	cache cache.Cache
+	cache      cache.Cache
+	httpClient http.Client
+	username   string
+	msgColor   string
 }
 
-func NewProvider(cfg cfg.Config, c cache.Cache) *Provider {
+func NewProvider(c cache.Cache, hc http.Client, username string, msgColor string) *Provider {
 	return &Provider{
-		cfg:   cfg,
-		cache: c,
+		cache:      c,
+		httpClient: hc,
+		username:   username,
+		msgColor:   msgColor,
 	}
 }
 
-func (p Provider) Latest(dryRun bool, dummy bool) ([]slack.Message, error) {
+func (p Provider) Cache() cache.Cache {
+	return p.cache
+}
+
+func (p Provider) Latest() ([]slack.Message, error) {
 	var data Data
 	var err error
 
-	f := NewFetcher(p.cfg.ProxyUrl())
+	f := NewFetcher(p.httpClient, p.username)
 
-	if dummy {
-		data, err = f.ExtractDataFromHtml(getDummyHtml())
-	} else {
-		data, err = f.FetchUserData(p.cfg.Username)
-	}
+	data, err = f.fetchUserData()
 
 	if err != nil {
 		return nil, err
 	}
 
-	lastDate := p.cache.ReadLastDate()
-	newMsgs := p.findNewMsgs(data.UserProfile(), lastDate)
+	up := data.UserProfile()
+	var newMsgs []slack.Message
 
-	log.Printf("[IG] New: %d\n", len(newMsgs))
-
-	if dryRun || len(newMsgs) == 0 {
-		return newMsgs, nil
-	}
-
-	newLastDate := newMsgs[0].Date
-
-	if newLastDate != lastDate {
-		if err := p.cache.WriteLastDate(newLastDate); err != nil {
-			log.Println("Could not write cache file")
-			log.Fatalln(err)
-		}
+	for _, node := range up.MediaNodes(maxNodes) {
+		newMsgs = append(newMsgs, p.createMessage(up, node))
 	}
 
 	return newMsgs, nil
-}
-
-func (p Provider) findNewMsgs(u User, lastDate int64) []slack.Message {
-	nodes := u.MediaNodes(maxNodes)
-
-	if len(nodes) == 0 {
-		return []slack.Message{}
-	}
-
-	if lastDate == -1 {
-		// Nothing cached, post only the last img and build cache file
-		return []slack.Message{p.createMessage(u, nodes[:1][0])}
-	}
-
-	var newMsgs []slack.Message
-
-	for _, node := range nodes {
-		if node.Date > lastDate {
-			newMsgs = append(newMsgs, p.createMessage(u, node))
-		}
-	}
-
-	return newMsgs
 }
 
 func (p Provider) createMessage(u User, n Node) slack.Message {
@@ -96,17 +64,8 @@ func (p Provider) createMessage(u User, n Node) slack.Message {
 	m.AuthorLink = u.ProfileUrl()
 	m.ImageUrl = n.Src
 	m.Date = int64(n.Date)
-	m.Color = p.cfg.MsgColor
+	m.Color = p.msgColor
 	m.Fallback = fmt.Sprintf("New Instagram post by %s", u.Username)
 
 	return *m
-}
-
-func getDummyHtml() []byte {
-	dummyResp, err := ioutil.ReadFile("fixtures/response.html")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return dummyResp
 }

@@ -1,37 +1,46 @@
 package instagram
 
 import (
+	"io/ioutil"
 	"log"
+	"net/http"
+	"os"
 	"testing"
 
-	"github.com/venyii/instabot/cfg"
+	"github.com/venyii/instabot/provider/cache"
 )
 
-type testCache struct {
-	Date int64
+type dummyCache struct {
+	cache.Cache
 }
 
-func (c *testCache) ReadLastDate() int64 {
-	return c.Date
-}
+type testTransport struct{}
 
-func (c *testCache) WriteLastDate(date int64) error {
-	c.Date = date
-	return nil
+func (t testTransport) RoundTrip(*http.Request) (*http.Response, error) {
+	f, err := os.Open("fixtures/response.html")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	r := &http.Response{
+		Body: ioutil.NopCloser(f),
+	}
+
+	return r, nil
 }
 
 func TestLatest(t *testing.T) {
-	cache := &testCache{Date: 1505237479}
-	config := cfg.Config{}
-	p := NewProvider(config, cache)
-	msgs, err := p.Latest(false, true)
+	a := http.Client{Transport: testTransport{}}
+
+	p := NewProvider(dummyCache{}, a, "test", "#ff000")
+	msgs, err := p.Latest()
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if len(msgs) != 8 {
-		t.Fatalf("unexpected msgs count, want 8 got %v", len(msgs))
+	if len(msgs) != 12 {
+		t.Fatalf("unexpected msgs count, want 12 got %v", len(msgs))
 	}
 
 	expectedIds := []int64{
@@ -43,15 +52,15 @@ func TestLatest(t *testing.T) {
 		1506381081,
 		1505931970,
 		1505413351,
+		1505237405,
+		1504652223,
+		1503969273,
+		1503698278,
 	}
 
-	for i := 0; i < 8; i++ {
+	for i := 0; i < len(expectedIds); i++ {
 		if msgs[i].Date != expectedIds[i] {
 			t.Fatalf("unexpected message returned at index %d", i)
 		}
-	}
-
-	if cache.Date != 1507829725 {
-		t.Fatalf("unexpected cache date, want 1507829725 got %v", cache.Date)
 	}
 }

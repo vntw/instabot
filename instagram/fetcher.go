@@ -5,9 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
-	"net/url"
 	"regexp"
 )
 
@@ -19,25 +17,25 @@ const (
 var r = regexp.MustCompile(dataRegex)
 
 type Fetcher struct {
-	proxyUrl *url.URL
+	hc       http.Client
+	username string
 
 	userAgent string
 }
 
-func NewFetcher(p *url.URL) Fetcher {
-	return Fetcher{proxyUrl: p}
+func NewFetcher(hc http.Client, username string) Fetcher {
+	return Fetcher{
+		hc:       hc,
+		username: username,
+	}
 }
 
-func (f Fetcher) FetchUserData(user string) (Data, error) {
-	html, err := f.fetchUserPage(user)
+func (f Fetcher) fetchUserData() (Data, error) {
+	html, err := f.fetchUserPage(f.username)
 	if err != nil {
 		return Data{}, err
 	}
 
-	return f.ExtractDataFromHtml(html)
-}
-
-func (f Fetcher) ExtractDataFromHtml(html []byte) (Data, error) {
 	jsonData, err := f.extractJsonData(html)
 
 	if err != nil {
@@ -54,7 +52,6 @@ func (f Fetcher) extractJsonData(html []byte) ([]byte, error) {
 	rawData := r.FindSubmatch(html)
 
 	if len(rawData) != 2 {
-		log.Printf("Unexpected raw data: %#v\n", rawData)
 		return nil, errors.New("could not extract data from response")
 	}
 
@@ -62,14 +59,6 @@ func (f Fetcher) extractJsonData(html []byte) ([]byte, error) {
 }
 
 func (f Fetcher) fetchUserPage(user string) ([]byte, error) {
-	var client *http.Client
-
-	if f.proxyUrl != nil {
-		client = &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(f.proxyUrl)}}
-	} else {
-		client = &http.Client{}
-	}
-
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s", baseUrl, user), nil)
 	if err != nil {
 		return nil, err
@@ -77,7 +66,7 @@ func (f Fetcher) fetchUserPage(user string) ([]byte, error) {
 
 	req.Header.Set("User-Agent", userAgent)
 
-	resp, err := client.Do(req)
+	resp, err := f.hc.Do(req)
 	if err != nil {
 		return nil, err
 	}
