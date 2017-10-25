@@ -9,6 +9,11 @@ import (
 	"github.com/venyii/instabot/slack"
 )
 
+type GoodBoy interface {
+	Sniff(p Provider) ([]slack.Message, error)
+	Sleep()
+}
+
 type WatchDog struct {
 	baseWaitTime uint8
 }

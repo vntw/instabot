@@ -9,6 +9,10 @@ import (
 	"github.com/nlopes/slack"
 )
 
+type Sender interface {
+	Send(msgs []Message)
+}
+
 type Client struct {
 	instance *slack.Client
 	channel  string
