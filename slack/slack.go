@@ -14,15 +14,15 @@ type Sender interface {
 }
 
 type Client struct {
-	instance *slack.Client
-	channel  string
+	instance  *slack.Client
+	channelId string
 }
 
 func NewClient(token, channel string) Client {
-	return Client{
-		instance: slack.New(token),
-		channel:  channel,
-	}
+	c := &Client{instance: slack.New(token)}
+	c.resolveChannelId(channel)
+
+	return *c
 }
 
 func (c Client) Send(msgs []Message) {
@@ -45,14 +45,7 @@ func (c Client) Send(msgs []Message) {
 }
 
 func (c Client) sendMsg(m Message) error {
-	var err error
-
-	channelId, err := c.resolveChannelId()
-	if err != nil {
-		return err
-	}
-
-	_, _, err = c.instance.PostMessage(channelId, m.Text, m.SlackMessageParams())
+	_, _, err := c.instance.PostMessage(c.channelId, m.Text, m.SlackMessageParams())
 	if err != nil {
 		return err
 	}
@@ -60,28 +53,30 @@ func (c Client) sendMsg(m Message) error {
 	return nil
 }
 
-func (c Client) resolveChannelId() (string, error) {
+func (c *Client) resolveChannelId(name string) error {
 	channels, err := c.instance.GetChannels(true)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	for _, channel := range channels {
-		if channel.Name == c.channel {
-			return channel.ID, nil
+		if channel.Name == name {
+			c.channelId = channel.ID
+			return nil
 		}
 	}
 
 	groups, err := c.instance.GetGroups(true)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	for _, group := range groups {
-		if group.Name == c.channel {
-			return group.ID, nil
+		if group.Name == name {
+			c.channelId = group.ID
+			return nil
 		}
 	}
 
-	return "", errors.New(fmt.Sprintf("could not resolve channel '%s'", c.channel))
+	return errors.New(fmt.Sprintf("could not resolve channel '%s'", name))
 }
