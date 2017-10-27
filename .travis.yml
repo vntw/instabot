@@ -7,6 +7,11 @@ go:
 env:
   - DEP_VERSION="0.3.2"
 
+matrix:
+  allow_failures:
+    - go: tip
+  fast_finish: true
+
 notifications:
   email: false
 
